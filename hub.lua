@@ -6,14 +6,13 @@ local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
 local CurrentTheme = Color3.fromRGB(255, 165, 0)
-local UIElements = {Strokes = {}, Toggles = {}}
+local UIElements = {Strokes = {}}
 
 -- // FUNKCJA NAPRAWIAJĄCA OSTROŚĆ
 local function SharpText(obj)
     obj.RichText = true
     obj.Font = Enum.Font.GothamBold
-    obj.TextSize = obj.TextSize
-    -- Dodajemy delikatny cień, który poprawia czytelność na czarnym tle
+    -- Dodajemy mikro-obrys dla lepszej czytelności na czarnym tle
     local shadow = Instance.new("UIStroke", obj)
     shadow.Thickness = 0.5
     shadow.Transparency = 0.5
@@ -41,7 +40,7 @@ end
 function NK_Hub:CreateWindow(Settings)
     local self = setmetatable({}, NK_Hub)
     self.Gui = Instance.new("ScreenGui", game.CoreGui)
-    self.Gui.Name = "NK_HUB_FINAL"
+    self.Gui.Name = "NK_HUB_V3" -- Zmiana nazwy pomaga uniknąć konfliktów
     self.Bind = Enum.KeyCode.K
     self.Toggled = true
 
@@ -54,7 +53,7 @@ function NK_Hub:CreateWindow(Settings)
     local MainStroke = Instance.new("UIStroke", self.Main)
     MainStroke.Color = CurrentTheme; MainStroke.Thickness = 2; table.insert(UIElements.Strokes, MainStroke)
 
-    -- NAGŁÓWEK
+    -- // NAGŁÓWEK
     local Header = Instance.new("Frame", self.Main)
     Header.Size = UDim2.new(1, 0, 0, 60); Header.BackgroundTransparency = 1
     
@@ -63,11 +62,12 @@ function NK_Hub:CreateWindow(Settings)
     Title.Size = UDim2.new(1, 0, 1, 0); Title.TextColor3 = Color3.fromRGB(255, 255, 255); Title.TextSize = 20
     Title.BackgroundTransparency = 1; SharpText(Title)
 
+    -- IKONA ZĘBATKI
     local SettingsIcon = Instance.new("TextButton", Header)
     SettingsIcon.Text = "⚙️"; SettingsIcon.Size = UDim2.new(0, 30, 0, 30); SettingsIcon.Position = UDim2.new(1, -45, 0.5, -15)
     SettingsIcon.BackgroundTransparency = 1; SettingsIcon.TextColor3 = Color3.fromRGB(255, 255, 255); SettingsIcon.TextSize = 22
 
-    -- // SIDEBAR Z PRZYCISKIEM ROZSUWANIA
+    -- // WYSUWANY SIDEBAR
     self.Sidebar = Instance.new("Frame", self.Main)
     self.Sidebar.Size = UDim2.new(0, 65, 0, 320); self.Sidebar.Position = UDim2.new(0, 15, 0, 75)
     self.Sidebar.BackgroundColor3 = Color3.fromRGB(18, 18, 18); self.Sidebar.ClipsDescendants = true
@@ -77,7 +77,7 @@ function NK_Hub:CreateWindow(Settings)
     local SideLayout = Instance.new("UIListLayout", self.Sidebar)
     SideLayout.Padding = UDim.new(0, 10); SideLayout.HorizontalAlignment = "Center"; SideLayout.SortOrder = "LayoutOrder"
 
-    -- PRZYCISK ROZSUWANIA (TERAZ WIDOCZNY)
+    -- PRZYCISK ROZSUWANIA >>
     local DrawerToggle = Instance.new("TextButton", self.Sidebar)
     DrawerToggle.LayoutOrder = -1; DrawerToggle.Size = UDim2.new(1, 0, 0, 35)
     DrawerToggle.Text = ">>"; DrawerToggle.TextColor3 = CurrentTheme; DrawerToggle.BackgroundTransparency = 1
@@ -86,11 +86,14 @@ function NK_Hub:CreateWindow(Settings)
     local Expanded = false
     DrawerToggle.MouseButton1Click:Connect(function()
         Expanded = not Expanded
-        TweenService:Create(self.Sidebar, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Size = Expanded and UDim2.new(0, 150, 0, 320) or UDim2.new(0, 65, 0, 320)}):Play()
+        local targetWidth = Expanded and 150 or 65
+        TweenService:Create(self.Sidebar, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Size = UDim2.new(0, targetWidth, 0, 320)}):Play()
         DrawerToggle.Text = Expanded and "<<" or ">>"
+        
         for _, btn in pairs(self.Sidebar:GetChildren()) do
             if btn:IsA("TextButton") and btn ~= DrawerToggle then
-                btn.Text = Expanded and "  " .. (btn:GetAttribute("TabName") or "") or (btn:GetAttribute("TabName") or ""):sub(1,1)
+                local fullTitle = btn:GetAttribute("TabName") or ""
+                btn.Text = Expanded and "  " .. fullTitle or fullTitle:sub(1,1)
                 btn.TextXAlignment = Expanded and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center
             end
         end
@@ -101,7 +104,7 @@ function NK_Hub:CreateWindow(Settings)
 
     MakeDraggable(self.Main, Header)
 
-    -- TOGGLE GUI BIND
+    -- // SYSTEM CHOWANIA (K)
     UserInputService.InputBegan:Connect(function(i, gpe)
         if not gpe and i.KeyCode == self.Bind then
             self.Toggled = not self.Toggled
@@ -110,15 +113,15 @@ function NK_Hub:CreateWindow(Settings)
         end
     end)
 
-    -- GENEROWANIE USTAWIEŃ
+    -- // GENEROWANIE USTAWIEŃ (ZĘBATKA)
     local SettingsPage = self:CreateTab("Settings")
     SettingsIcon.MouseButton1Click:Connect(function()
         for _, p in pairs(self.Pages:GetChildren()) do p.Visible = false end
         self.Pages:FindFirstChild("Settings").Visible = true
     end)
 
-    local themeList = {["Orange"] = Color3.fromRGB(255,165,0), ["Red"] = Color3.fromRGB(255,50,50), ["Blue"] = Color3.fromRGB(50,150,255), ["Cyan"] = Color3.fromRGB(0,255,255), ["Purple"] = Color3.fromRGB(160,50,255)}
-    for name, color in pairs(themeList) do
+    local themes = {["Orange"] = Color3.fromRGB(255,165,0), ["Red"] = Color3.fromRGB(255,50,50), ["Blue"] = Color3.fromRGB(50,150,255), ["Cyan"] = Color3.fromRGB(0,255,255), ["Purple"] = Color3.fromRGB(160,50,255)}
+    for name, color in pairs(themes) do
         SettingsPage:CreateToggle("Theme: "..name, "Sets UI color to "..name, function(s)
             if s then
                 CurrentTheme = color
@@ -175,6 +178,23 @@ function NK_Hub:CreateTab(Name)
         end)
     end
 
+    function Funcs:CreateSlider(Text, Min, Max, Default, Callback)
+        local Tile = Instance.new("Frame", Page); Tile.Size = UDim2.new(1, -15, 0, 85); Tile.BackgroundColor3 = Color3.fromRGB(20, 20, 20); Instance.new("UICorner", Tile)
+        local T = Instance.new("TextLabel", Tile); T.Text = "<b>"..Text..": "..Default.."</b>"; T.Size = UDim2.new(1,-20,0,35); T.TextColor3 = Color3.fromRGB(255,255,255); T.BackgroundTransparency = 1; SharpText(T); T.Position = UDim2.new(0,15,0,5); T.TextXAlignment = "Left"
+        local Bar = Instance.new("Frame", Tile); Bar.Size = UDim2.new(0.9,0,0,6); Bar.Position = UDim2.new(0.05,0,0.7,0); Bar.BackgroundColor3 = Color3.fromRGB(40,40,40); Instance.new("UICorner", Bar)
+        local Fill = Instance.new("Frame", Bar); Fill.Size = UDim2.new((Default-Min)/(Max-Min),0,1,0); Fill.BackgroundColor3 = CurrentTheme; Instance.new("UICorner", Fill)
+        
+        RunService.RenderStepped:Connect(function() Fill.BackgroundColor3 = CurrentTheme end)
+        local isDragging = false
+        local function Update(i)
+            local pos = math.clamp((i.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+            Fill.Size = UDim2.new(pos, 0, 1, 0); local val = math.floor(Min + (Max - Min) * pos); T.Text = "<b>"..Text..": "..val.."</b>"; Callback(val)
+        end
+        Bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = true; Update(i) end end)
+        UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = false end end)
+        UserInputService.InputChanged:Connect(function(i) if isDragging and i.UserInputType == Enum.UserInputType.MouseMovement then Update(i) end end)
+    end
+
     return Funcs
 end
 
@@ -182,10 +202,8 @@ function NK_Hub:Notification(Title, Content, Duration)
     local Notif = Instance.new("Frame", self.Gui); Notif.Size = UDim2.new(0, 250, 0, 80); Notif.Position = UDim2.new(1, 20, 0.8, 0)
     Notif.BackgroundColor3 = Color3.fromRGB(15, 15, 15); Instance.new("UICorner", Notif)
     local S = Instance.new("UIStroke", Notif); S.Color = CurrentTheme; table.insert(UIElements.Strokes, S)
-    
     local T = Instance.new("TextLabel", Notif); T.Text = "<b>"..Title.."</b>"; T.Size = UDim2.new(1,0,0.4,0); T.TextColor3 = Color3.fromRGB(255,255,255); SharpText(T)
     local C = Instance.new("TextLabel", Notif); C.Text = Content; C.Size = UDim2.new(1,-20,0.6,0); C.Position = UDim2.new(0,10,0.4,0); C.TextColor3 = Color3.fromRGB(200,200,200); SharpText(C); C.TextSize = 12
-
     Notif:TweenPosition(UDim2.new(1, -270, 0.8, 0), "Out", "Quart", 0.5)
     task.delay(Duration or 3, function() Notif:TweenPosition(UDim2.new(1, 20, 0.8, 0), "In", "Quart", 0.5); task.wait(0.5); Notif:Destroy() end)
 end
