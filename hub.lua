@@ -5,29 +5,20 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
--- // SYSTEM DRAGU (NAPRAWIONY - BLOKUJE ELEMENTY INTERAKTYWNE)
-local function MakeDraggable(Frame)
+-- // SYSTEM DRAGU (NAPRAWIONY - PRZYPISANY DO UCHWYTU)
+local function MakeDraggable(Frame, Handle)
     local dragging, dragInput, dragStart, startPos
-    Frame.InputBegan:Connect(function(input)
+    Handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            -- Ignoruj drag, jeśli klikasz w przycisk lub suwak
-            local obj = game:GetService("GuiService"):GetGuiObjectsAtPosition(input.Position.X, input.Position.Y)
-            local isInteracting = false
-            for _, v in pairs(obj) do
-                if v:IsA("TextButton") or v:IsA("ScrollingFrame") or v.Name == "SliderBar" then
-                    isInteracting = true; break
-                end
-            end
-            
-            if not isInteracting then
-                dragging = true; dragStart = input.Position; startPos = Frame.Position
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then dragging = false end
-                end)
-            end
+            dragging = true
+            dragStart = input.Position
+            startPos = Frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
         end
     end)
-    Frame.InputChanged:Connect(function(input)
+    Handle.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
     end)
     UserInputService.InputChanged:Connect(function(input)
@@ -56,18 +47,25 @@ function NK_Hub:CreateWindow(Settings)
     MainStroke.Thickness = 2
     MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-    -- Nagłówek
+    -- Nagłówek (Teraz służy jako uchwyt do przesuwania)
     local Header = Instance.new("Frame", self.Main)
-    Header.Size = UDim2.new(0, 400, 0, 55); Header.Position = UDim2.new(0.25, 0, 0.05, 0)
-    Header.BackgroundColor3 = Color3.fromRGB(18, 18, 18); Instance.new("UICorner", Header)
-    Instance.new("UIStroke", Header).Color = Color3.fromRGB(255, 165, 0)
+    Header.Size = UDim2.new(1, 0, 0, 70) -- Większy obszar do chwytania
+    Header.BackgroundTransparency = 1
+    
+    local HeaderVisual = Instance.new("Frame", Header)
+    HeaderVisual.Size = UDim2.new(0, 400, 0, 55)
+    HeaderVisual.Position = UDim2.new(0.5, -200, 0.15, 0)
+    HeaderVisual.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    Instance.new("UICorner", HeaderVisual)
+    Instance.new("UIStroke", HeaderVisual).Color = Color3.fromRGB(255, 165, 0)
 
-    local Title = Instance.new("TextLabel", Header)
-    Title.Text = "<b>NK HUB</b>"; Title.Size = UDim2.new(1, 0, 0.6, 0)
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255); Title.Font = "GothamBold"
-    Title.TextSize = 20; Title.RichText = true; Title.BackgroundTransparency = 1
+    local Title = Instance.new("TextLabel", HeaderVisual)
+    Title.Text = "<b>NK HUB</b>"
+    Title.Size = UDim2.new(1, 0, 0.6, 0)
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.Font = "GothamBold"; Title.TextSize = 20; Title.RichText = true; Title.BackgroundTransparency = 1
 
-    local Sub = Instance.new("TextLabel", Header)
+    local Sub = Instance.new("TextLabel", HeaderVisual)
     Sub.Text = Settings.GameName or "Universal Menu"
     Sub.Position = UDim2.new(0, 0, 0.5, 0); Sub.Size = UDim2.new(1, 0, 0.4, 0)
     Sub.TextColor3 = Color3.fromRGB(180, 180, 180); Sub.Font = "GothamBold"; Sub.TextSize = 12
@@ -75,7 +73,7 @@ function NK_Hub:CreateWindow(Settings)
 
     -- Sidebar
     self.Sidebar = Instance.new("Frame", self.Main)
-    self.Sidebar.Size = UDim2.new(0, 65, 0, 320); self.Sidebar.Position = UDim2.new(0.03, 0, 0.2, 0)
+    self.Sidebar.Size = UDim2.new(0, 65, 0, 310); self.Sidebar.Position = UDim2.new(0.03, 0, 0.22, 0)
     self.Sidebar.BackgroundColor3 = Color3.fromRGB(18, 18, 18); Instance.new("UICorner", self.Sidebar)
     Instance.new("UIStroke", self.Sidebar).Color = Color3.fromRGB(255, 165, 0)
 
@@ -83,10 +81,10 @@ function NK_Hub:CreateWindow(Settings)
     SideLayout.Padding = UDim.new(0, 12); SideLayout.HorizontalAlignment = "Center"; SideLayout.VerticalAlignment = "Center"
 
     self.Pages = Instance.new("Frame", self.Main)
-    self.Pages.Size = UDim2.new(0, 460, 0, 320); self.Pages.Position = UDim2.new(0.18, 0, 0.2, 0)
+    self.Pages.Size = UDim2.new(0, 460, 0, 310); self.Pages.Position = UDim2.new(0.18, 0, 0.22, 0)
     self.Pages.BackgroundTransparency = 1
 
-    MakeDraggable(self.Main)
+    MakeDraggable(self.Main, Header)
     return self
 end
 
@@ -94,7 +92,7 @@ end
 function NK_Hub:CreateTab(Name)
     local Page = Instance.new("ScrollingFrame", self.Pages)
     Page.Size = UDim2.new(1, 0, 1, 0); Page.BackgroundTransparency = 1; Page.Visible = #self.Pages:GetChildren() == 1
-    Page.ScrollBarThickness = 1; Page.AutomaticCanvasSize = "Y"; Page.BorderSizePixel = 0
+    Page.ScrollBarThickness = 2; Page.AutomaticCanvasSize = "Y"; Page.BorderSizePixel = 0
     Instance.new("UIListLayout", Page).Padding = UDim.new(0, 10)
 
     local TabBtn = Instance.new("TextButton", self.Sidebar)
@@ -109,16 +107,17 @@ function NK_Hub:CreateTab(Name)
 
     local Funcs = {}
 
-    -- // SLIDER (POPRAWIONY - GLOBALNE ŚLEDZENIE)
+    -- // SLIDER (NAPRAWIONY)
     function Funcs:CreateSlider(Text, Min, Max, Default, Callback)
         local Tile = Instance.new("Frame", Page)
         Tile.Size = UDim2.new(1, -15, 0, 85); Tile.BackgroundColor3 = Color3.fromRGB(20, 20, 20); Tile.Active = true
         Instance.new("UICorner", Tile)
 
         local T = Instance.new("TextLabel", Tile)
-        T.Text = "<b>" .. Text .. ": " .. Default .. "</b>"; T.Size = UDim2.new(1, -20, 0, 35)
+        T.Text = "<b>" .. Text .. ": " .. Default .. "</b>"
+        T.Size = UDim2.new(1, -20, 0, 35); T.Position = UDim2.new(0, 15, 0, 5)
         T.TextColor3 = Color3.fromRGB(255, 255, 255); T.Font = "GothamBold"; T.RichText = true
-        T.BackgroundTransparency = 1; T.Position = UDim2.new(0, 15, 0, 5); T.TextXAlignment = "Left"
+        T.BackgroundTransparency = 1; T.TextXAlignment = "Left"
 
         local Bar = Instance.new("Frame", Tile)
         Bar.Name = "SliderBar"; Bar.Size = UDim2.new(0.9, 0, 0, 6); Bar.Position = UDim2.new(0.05, 0, 0.7, 0)
@@ -135,7 +134,7 @@ function NK_Hub:CreateTab(Name)
             T.Text = "<b>" .. Text .. ": " .. val .. "</b>"; Callback(val)
         end
 
-        Tile.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = true; Update(i) end end)
+        Bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = true; Update(i) end end)
         UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = false end end)
         UserInputService.InputChanged:Connect(function(i) if isDragging and i.UserInputType == Enum.UserInputType.MouseMovement then Update(i) end end)
     end
@@ -144,7 +143,7 @@ function NK_Hub:CreateTab(Name)
         local State = false
         local Tile = Instance.new("TextButton", Page)
         Tile.Size = UDim2.new(1, -15, 0, 75); Tile.BackgroundColor3 = Color3.fromRGB(20, 20, 20); Tile.Text = ""
-        Instance.new("UICorner", Tile)
+        Tile.ClipsDescendants = true; Instance.new("UICorner", Tile)
 
         local T = Instance.new("TextLabel", Tile)
         T.Text = "<b>" .. Text .. "</b>"; T.Size = UDim2.new(0.7, 0, 0.5, 0); T.Position = UDim2.new(0, 15, 0.15, 0)
@@ -168,6 +167,28 @@ function NK_Hub:CreateTab(Name)
     end
 
     return Funcs
+end
+
+-- // POWIADOMIENIA
+function NK_Hub:Notification(Title, Content, Duration)
+    local Notif = Instance.new("Frame", self.Gui)
+    Notif.Size = UDim2.new(0, 250, 0, 80); Notif.Position = UDim2.new(1, 20, 0.8, 0)
+    Notif.BackgroundColor3 = Color3.fromRGB(15, 15, 15); Instance.new("UICorner", Notif)
+    Instance.new("UIStroke", Notif).Color = Color3.fromRGB(255, 165, 0)
+    
+    local T = Instance.new("TextLabel", Notif)
+    T.Text = "<b>" .. Title .. "</b>"; T.Size = UDim2.new(1, 0, 0.4, 0); T.TextColor3 = Color3.fromRGB(255, 255, 255)
+    T.Font = "GothamBold"; T.RichText = true; T.BackgroundTransparency = 1; T.TextSize = 14
+    
+    local C = Instance.new("TextLabel", Notif)
+    C.Text = Content; C.Size = UDim2.new(1, -20, 0.6, 0); C.Position = UDim2.new(0, 10, 0.4, 0)
+    C.TextColor3 = Color3.fromRGB(200, 200, 200); C.Font = "GothamBold"; C.TextSize = 12; C.BackgroundTransparency = 1; C.TextWrapped = true
+
+    Notif:TweenPosition(UDim2.new(1, -270, 0.8, 0), "Out", "Back", 0.5)
+    task.delay(Duration or 5, function()
+        Notif:TweenPosition(UDim2.new(1, 20, 0.8, 0), "In", "Back", 0.5)
+        task.wait(0.5); Notif:Destroy()
+    end)
 end
 
 return NK_Hub
