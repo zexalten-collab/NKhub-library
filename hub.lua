@@ -5,11 +5,16 @@ local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 
--- // ZMIENNE MOTYWU (DOMYŚLNY POMARAŃCZ)
 local CurrentTheme = Color3.fromRGB(255, 165, 0)
-local UIStrokes = {} -- Lista do dynamicznej zmiany kolorów
+local UIElements = {Strokes = {}, Texts = {}}
 
--- // SYSTEM DRAGU
+-- // FUNKCJA NAPRAWIAJĄCA OSTROŚĆ TEKSTU
+local function ApplySharpness(label)
+    label.RichText = true
+    label.TextSize = label.TextSize -- wymuszenie odświeżenia
+    label.Font = Enum.Font.GothamBold
+end
+
 local function MakeDraggable(Frame, Handle)
     local dragging, dragInput, dragStart, startPos
     Handle.InputBegan:Connect(function(input)
@@ -20,11 +25,8 @@ local function MakeDraggable(Frame, Handle)
             end)
         end
     end)
-    Handle.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
-    end)
     UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
             Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
@@ -34,81 +36,75 @@ end
 function NK_Hub:CreateWindow(Settings)
     local self = setmetatable({}, NK_Hub)
     self.Gui = Instance.new("ScreenGui", game.CoreGui)
-    self.Bind = Enum.KeyCode.K
     self.Toggled = true
-    
+    self.Bind = Enum.KeyCode.K
+
     self.Main = Instance.new("Frame", self.Gui)
     self.Main.Size = UDim2.new(0, 580, 0, 420)
     self.Main.Position = UDim2.new(0.5, -290, 0.5, -210)
     self.Main.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
-    Instance.new("UICorner", self.Main).CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", self.Main).CornerRadius = UDim.new(0, 10)
 
     local MainStroke = Instance.new("UIStroke", self.Main)
-    MainStroke.Color = CurrentTheme; MainStroke.Thickness = 2; table.insert(UIStrokes, MainStroke)
+    MainStroke.Color = CurrentTheme; MainStroke.Thickness = 2; table.insert(UIElements.Strokes, MainStroke)
 
     -- NAGŁÓWEK
     local Header = Instance.new("Frame", self.Main)
-    Header.Size = UDim2.new(1, 0, 0, 60); Header.BackgroundTransparency = 1
+    Header.Size = UDim2.new(1, 0, 0, 50); Header.BackgroundTransparency = 1
     
     local Title = Instance.new("TextLabel", Header)
     Title.Text = "<b>NK HUB</b>"; Title.Size = UDim2.new(1, 0, 1, 0)
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255); Title.Font = "GothamBold"; Title.TextSize = 20; Title.RichText = true; Title.BackgroundTransparency = 1
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255); Title.TextSize = 18; ApplySharpness(Title); Title.BackgroundTransparency = 1
 
-    -- IKONA ZĘBATKI (Ustawienia)
     local SettingsIcon = Instance.new("TextButton", Header)
-    SettingsIcon.Text = "⚙️"; SettingsIcon.Size = UDim2.new(0, 30, 0, 30); SettingsIcon.Position = UDim2.new(1, -40, 0, 15)
+    SettingsIcon.Text = "⚙️"; SettingsIcon.Size = UDim2.new(0, 30, 0, 30); SettingsIcon.Position = UDim2.new(1, -40, 0.5, -15)
     SettingsIcon.BackgroundTransparency = 1; SettingsIcon.TextColor3 = Color3.fromRGB(255, 255, 255); SettingsIcon.TextSize = 20
 
-    -- SIDEBAR
+    -- // SIDEBAR Z WYSUWANIEM
     self.Sidebar = Instance.new("Frame", self.Main)
-    self.Sidebar.Size = UDim2.new(0, 60, 0, 300); self.Sidebar.Position = UDim2.new(0.03, 0, 0.22, 0); self.Sidebar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    self.Sidebar.Size = UDim2.new(0, 60, 0, 330); self.Sidebar.Position = UDim2.new(0, 15, 0, 70)
+    self.Sidebar.BackgroundColor3 = Color3.fromRGB(18, 18, 18); self.Sidebar.ClipsDescendants = true
     Instance.new("UICorner", self.Sidebar)
-    local SideStroke = Instance.new("UIStroke", self.Sidebar); SideStroke.Color = CurrentTheme; table.insert(UIStrokes, SideStroke)
+    local SideStroke = Instance.new("UIStroke", self.Sidebar); SideStroke.Color = CurrentTheme; table.insert(UIElements.Strokes, SideStroke)
+
+    local DrawerToggle = Instance.new("TextButton", self.Sidebar)
+    DrawerToggle.Text = ">>"; DrawerToggle.Size = UDim2.new(1, 0, 0, 30); DrawerToggle.BackgroundTransparency = 1
+    DrawerToggle.TextColor3 = CurrentTheme; ApplySharpness(DrawerToggle)
 
     local SideLayout = Instance.new("UIListLayout", self.Sidebar)
-    SideLayout.Padding = UDim.new(0, 8); SideLayout.HorizontalAlignment = "Center"
+    SideLayout.Padding = UDim.new(0, 10); SideLayout.HorizontalAlignment = "Center"
 
-    self.Pages = Instance.new("Frame", self.Main)
-    self.Pages.Size = UDim2.new(0, 400, 0, 300); self.Pages.Position = UDim2.new(0.28, 0, 0.22, 0); self.Pages.BackgroundTransparency = 1
-
-    MakeDraggable(self.Main, Header)
-
-    -- FUNKCJA CHOWANIA (TOGGLE GUI)
-    UserInputService.InputBegan:Connect(function(input, gpe)
-        if not gpe and input.KeyCode == self.Bind then
-            self.Toggled = not self.Toggled
-            self.Main.Visible = self.Toggled
-            if not self.Toggled then
-                self:Notification("NK HUB", "GUI HIDDEN ("..self.Bind.Name..")", 3)
+    local Expanded = false
+    DrawerToggle.MouseButton1Click:Connect(function()
+        Expanded = not Expanded
+        TweenService:Create(self.Sidebar, TweenInfo.new(0.3), {Size = Expanded and UDim2.new(0, 140, 0, 330) or UDim2.new(0, 60, 0, 330)}):Play()
+        DrawerToggle.Text = Expanded and "<<" or ">>"
+        for _, btn in pairs(self.Sidebar:GetChildren()) do
+            if btn:IsA("TextButton") and btn ~= DrawerToggle then
+                btn.Text = Expanded and "  " .. (btn:GetAttribute("TabName") or "") or (btn:GetAttribute("TabName") or ""):sub(1,1)
+                btn.TextXAlignment = Expanded and "Left" or "Center"
             end
         end
     end)
 
-    -- STWORZENIE ZAKŁADKI SETTINGS DOMYŚLNIE
+    self.Pages = Instance.new("Frame", self.Main)
+    self.Pages.Size = UDim2.new(0, 470, 0, 330); self.Pages.Position = UDim2.new(0, 85, 0, 70); self.Pages.BackgroundTransparency = 1
+
+    MakeDraggable(self.Main, Header)
+
+    -- OBSŁUGA BINDÓW I THEMES
     local SettingsTab = self:CreateTab("Settings")
     SettingsIcon.MouseButton1Click:Connect(function()
         for _, p in pairs(self.Pages:GetChildren()) do p.Visible = false end
         self.Pages:FindFirstChild("Settings").Visible = true
     end)
 
-    -- THEMES LOGIC
-    SettingsTab:CreateToggle("Show Instructions", "Key Bind: K to hide/show", function() end)
-    
-    -- Opcja zmiany kolorów (Theme Selector)
-    local themes = {
-        ["Orange"] = Color3.fromRGB(255, 165, 0),
-        ["Red"] = Color3.fromRGB(255, 50, 50),
-        ["Blue"] = Color3.fromRGB(50, 150, 255),
-        ["Cyan"] = Color3.fromRGB(0, 255, 255),
-        ["Purple"] = Color3.fromRGB(180, 50, 255)
-    }
-
-    for name, color in pairs(themes) do
-        -- Tutaj można by dodać CreateButton, ale użyjemy Twojego CreateToggle jako "klikacza" kolorów
-        SettingsTab:CreateToggle("Set Theme: "..name, "Change UI color to "..name, function(s)
+    local themes = {["Orange"] = Color3.fromRGB(255,165,0), ["Red"] = Color3.fromRGB(255,50,50), ["Blue"] = Color3.fromRGB(50,150,255), ["Cyan"] = Color3.fromRGB(0,255,255)}
+    for name, col in pairs(themes) do
+        SettingsTab:CreateToggle("Theme: "..name, "Change UI to "..name, function(s)
             if s then
-                for _, stroke in pairs(UIStrokes) do stroke.Color = color end
-                CurrentTheme = color
+                CurrentTheme = col
+                for _, st in pairs(UIElements.Strokes) do st.Color = col end
             end
         end)
     end
@@ -123,8 +119,9 @@ function NK_Hub:CreateTab(Name)
     Instance.new("UIListLayout", Page).Padding = UDim.new(0, 10)
 
     local TabBtn = Instance.new("TextButton", self.Sidebar)
-    TabBtn.Size = UDim2.new(0, 42, 0, 42); TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25); TabBtn.Text = Name:sub(1,1)
-    TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255); TabBtn.Font = "GothamBold"; Instance.new("UICorner", TabBtn)
+    TabBtn.Size = UDim2.new(0, 40, 0, 40); TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    TabBtn.Text = Name:sub(1,1); TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255); ApplySharpness(TabBtn)
+    TabBtn:SetAttribute("TabName", Name); Instance.new("UICorner", TabBtn)
     
     TabBtn.MouseButton1Click:Connect(function()
         for _, p in pairs(self.Pages:GetChildren()) do p.Visible = false end
@@ -133,34 +130,21 @@ function NK_Hub:CreateTab(Name)
 
     local Funcs = {}
 
-    function Funcs:CreateSlider(Text, Min, Max, Default, Callback)
-        local Tile = Instance.new("Frame", Page); Tile.Size = UDim2.new(1, -15, 0, 85); Tile.BackgroundColor3 = Color3.fromRGB(20, 20, 20); Tile.Active = true; Instance.new("UICorner", Tile)
-        local T = Instance.new("TextLabel", Tile); T.Text = "<b>"..Text..": "..Default.."</b>"; T.Size = UDim2.new(1,-20,0,35); T.TextColor3 = Color3.fromRGB(255,255,255); T.Font = "GothamBold"; T.RichText = true; T.BackgroundTransparency = 1; T.TextXAlignment = "Left"; T.Position = UDim2.new(0,15,0,5)
-        local Bar = Instance.new("Frame", Tile); Bar.Size = UDim2.new(0.9,0,0,6); Bar.Position = UDim2.new(0.05,0,0.7,0); Bar.BackgroundColor3 = Color3.fromRGB(40,40,40); Instance.new("UICorner", Bar)
-        local Fill = Instance.new("Frame", Bar); Fill.Size = UDim2.new((Default-Min)/(Max-Min),0,1,0); Fill.BackgroundColor3 = CurrentTheme; Instance.new("UICorner", Fill)
-        
-        -- Automatyczna aktualizacja koloru suwaka przy zmianie motywu
-        RunService.RenderStepped:Connect(function() Fill.BackgroundColor3 = CurrentTheme end)
-
-        local isDragging = false
-        local function Update(i)
-            local pos = math.clamp((i.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-            Fill.Size = UDim2.new(pos, 0, 1, 0); local val = math.floor(Min + (Max - Min) * pos); T.Text = "<b>"..Text..": "..val.."</b>"; Callback(val)
-        end
-        Bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = true; Update(i) end end)
-        UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then isDragging = false end end)
-        UserInputService.InputChanged:Connect(function(i) if isDragging and i.UserInputType == Enum.UserInputType.MouseMovement then Update(i) end end)
-    end
-
     function Funcs:CreateToggle(Text, Desc, Callback)
         local State = false
-        local Tile = Instance.new("TextButton", Page); Tile.Size = UDim2.new(1,-15,0,75); Tile.BackgroundColor3 = Color3.fromRGB(20,20,20); Tile.Text = ""; Instance.new("UICorner", Tile)
-        local T = Instance.new("TextLabel", Tile); T.Text = "<b>"..Text.."</b>"; T.Size = UDim2.new(0.7,0,0.5,0); T.Position = UDim2.new(0,15,0.15,0); T.TextColor3 = Color3.fromRGB(255,255,255); T.Font = "GothamBold"; T.RichText = true; T.TextXAlignment = "Left"; T.BackgroundTransparency = 1
-        local D = Instance.new("TextLabel", Tile); D.Text = Desc; D.Size = UDim2.new(0.7,0,0.4,0); D.Position = UDim2.new(0,15,0.55,0); D.TextColor3 = CurrentTheme; D.Font = "GothamBold"; D.TextSize = 12; T.RichText = true; D.BackgroundTransparency = 1; D.TextXAlignment = "Left"
-        
-        local Switch = Instance.new("Frame", Tile); Switch.Size = UDim2.new(0,45,0,22); Switch.Position = UDim2.new(0.85,0,0.35,0); Switch.BackgroundColor3 = Color3.fromRGB(45,45,45); Instance.new("UICorner", Switch).CornerRadius = UDim.new(1,0)
-        
-        -- Dynamiczna zmiana koloru opisu i switcha
+        local Tile = Instance.new("TextButton", Page); Tile.Size = UDim2.new(1, -10, 0, 70); Tile.BackgroundColor3 = Color3.fromRGB(20, 20, 20); Tile.Text = ""
+        Instance.new("UICorner", Tile)
+
+        local T = Instance.new("TextLabel", Tile); T.Text = "<b>"..Text.."</b>"; T.Size = UDim2.new(0.7,0,0.5,0); T.Position = UDim2.new(0,10,0.1,0)
+        T.TextColor3 = Color3.fromRGB(255,255,255); T.BackgroundTransparency = 1; ApplySharpness(T); T.TextXAlignment = "Left"
+
+        local D = Instance.new("TextLabel", Tile); D.Text = Desc; D.Size = UDim2.new(0.7,0,0.4,0); D.Position = UDim2.new(0,10,0.5,0)
+        D.TextColor3 = CurrentTheme; D.BackgroundTransparency = 1; ApplySharpness(D); D.TextXAlignment = "Left"; D.TextSize = 12
+        table.insert(UIElements.Texts, D)
+
+        local Switch = Instance.new("Frame", Tile); Switch.Size = UDim2.new(0,40,0,20); Switch.Position = UDim2.new(0.85,0,0.4,0)
+        Switch.BackgroundColor3 = Color3.fromRGB(40,40,40); Instance.new("UICorner", Switch).CornerRadius = UDim.new(1,0)
+
         RunService.RenderStepped:Connect(function() 
             D.TextColor3 = CurrentTheme
             if State then Switch.BackgroundColor3 = CurrentTheme end
@@ -168,20 +152,24 @@ function NK_Hub:CreateTab(Name)
 
         Tile.MouseButton1Click:Connect(function()
             State = not State
-            TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = State and CurrentTheme or Color3.fromRGB(45, 45, 45)}):Play()
+            TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = State and CurrentTheme or Color3.fromRGB(40,40,40)}):Play()
             Callback(State)
         end)
     end
+
     return Funcs
 end
 
 function NK_Hub:Notification(Title, Content, Duration)
-    local Notif = Instance.new("Frame", self.Gui); Notif.Size = UDim2.new(0, 250, 0, 80); Notif.Position = UDim2.new(1, 20, 0.8, 0); Notif.BackgroundColor3 = Color3.fromRGB(15, 15, 15); Instance.new("UICorner", Notif)
-    local Stroke = Instance.new("UIStroke", Notif); Stroke.Color = CurrentTheme; table.insert(UIStrokes, Stroke)
-    local T = Instance.new("TextLabel", Notif); T.Text = "<b>"..Title.."</b>"; T.Size = UDim2.new(1,0,0.4,0); T.TextColor3 = Color3.fromRGB(255,255,255); T.Font = "GothamBold"; T.RichText = true; T.BackgroundTransparency = 1; T.TextSize = 14
-    local C = Instance.new("TextLabel", Notif); C.Text = Content; C.Size = UDim2.new(1,-20,0.6,0); C.Position = UDim2.new(0,10,0.4,0); C.TextColor3 = Color3.fromRGB(200,200,200); C.Font = "GothamBold"; C.TextSize = 12; C.BackgroundTransparency = 1; C.TextWrapped = true
-    Notif:TweenPosition(UDim2.new(1, -270, 0.8, 0), "Out", "Back", 0.5)
-    task.delay(Duration or 5, function() Notif:TweenPosition(UDim2.new(1, 20, 0.8, 0), "In", "Back", 0.5) task.wait(0.5); Notif:Destroy() end)
+    local Notif = Instance.new("Frame", self.Gui); Notif.Size = UDim2.new(0, 240, 0, 70); Notif.Position = UDim2.new(1, 20, 0.85, 0); Notif.BackgroundColor3 = Color3.fromRGB(15,15,15)
+    local Stroke = Instance.new("UIStroke", Notif); Stroke.Color = CurrentTheme; table.insert(UIElements.Strokes, Stroke)
+    Instance.new("UICorner", Notif)
+    
+    local T = Instance.new("TextLabel", Notif); T.Text = "<b>"..Title.."</b>"; T.Size = UDim2.new(1,0,0.4,0); T.TextColor3 = Color3.fromRGB(255,255,255); ApplySharpness(T)
+    local C = Instance.new("TextLabel", Notif); C.Text = Content; C.Size = UDim2.new(1,-20,0.6,0); C.Position = UDim2.new(0,10,0.4,0); C.TextColor3 = Color3.fromRGB(180,180,180); ApplySharpness(C); C.TextSize = 12
+
+    Notif:TweenPosition(UDim2.new(1, -260, 0.85, 0), "Out", "Quart", 0.5)
+    task.delay(Duration or 3, function() Notif:TweenPosition(UDim2.new(1, 20, 0.85, 0), "In", "Quart", 0.5) task.wait(0.5); Notif:Destroy() end)
 end
 
 return NK_Hub
