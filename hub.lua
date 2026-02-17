@@ -199,6 +199,15 @@ function NK_Library:CreateTab(name)
 
     Corner(Button,6)
 
+    -- Wklej to pod Corner(Button, 6) w image_4d723f.png
+    local BtnLabel = Instance.new("TextLabel", Button)
+    BtnLabel.Size = UDim2.new(1, 0, 1, 0)
+    BtnLabel.Text = name -- Ustawia nazwę lub emotkę, którą wpiszesz w skrypcie
+    BtnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    BtnLabel.BackgroundTransparency = 1
+    BtnLabel.Font = Enum.Font.GothamBold
+    BtnLabel.TextSize = 14
+
     local Indicator = Instance.new("Frame",Button)
     Indicator.Name = "Indicator" -- POPRAWKA: Nadanie nazwy dla pętli
     Indicator.Size = UDim2.new(0,3,1,0)
