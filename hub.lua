@@ -95,7 +95,7 @@ function NK_Library:CreateWindow(cfg)
     self.Main.Size = UDim2.new(0,520,0,340)
     self.Main.Position = UDim2.new(0.5,-260,0.5,-170)
     self.Main.BackgroundColor3 = Theme.Background
-    self.Main.ClipsDescendants = false
+    self.Main.ClipsDescendants = true -- Zmienione na true dla animacji otwierania
 
     Corner(self.Main,10)
     Stroke(self.Main)
@@ -132,7 +132,7 @@ function NK_Library:CreateWindow(cfg)
     local MobileButton = Instance.new("TextButton", self.Gui)
     MobileButton.Name = "MobileOpen"
     MobileButton.Size = UDim2.new(0, 100, 0, 35)
-    MobileButton.Position = UDim2.new(0.5, -50, 0, -50) -- Start poza ekranem
+    MobileButton.Position = UDim2.new(0.5, -50, 0, 15)
     MobileButton.BackgroundColor3 = Theme.Surface
     MobileButton.Text = "NK HUB"
     MobileButton.TextColor3 = Theme.Accent
@@ -148,25 +148,26 @@ function NK_Library:CreateWindow(cfg)
             self.Side.Visible = true
             Header.Visible = true
             self.Main:TweenSize(UDim2.new(0,520,0,340), "Out", "Back", 0.3, true)
-            MobileButton:TweenPosition(UDim2.new(0.5, -50, 0, -50), "In", "Sine", 0.2, true, function() MobileButton.Visible = false end)
+            MobileButton.Visible = false
         else
             self.Main:TweenSize(UDim2.new(0,0,0,0), "In", "Back", 0.3, true, function()
                 self.Main.Visible = false
                 self.Side.Visible = false
                 Header.Visible = false
                 MobileButton.Visible = true
-                MobileButton:TweenPosition(UDim2.new(0.5, -50, 0, 15), "Out", "Back", 0.3, true)
             end)
         end
     end
 
+    -- PRZYCISK ZAMYKANIA X
     local CloseBtn = Instance.new("TextButton", Header)
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
     CloseBtn.Position = UDim2.new(1, -35, 0.5, -15)
     CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     CloseBtn.Text = "×"
     CloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
-    Text(CloseBtn, 20)
+    CloseBtn.TextSize = 25
+    CloseBtn.Font = Enum.Font.GothamBold
     Corner(CloseBtn, 6)
     Stroke(CloseBtn, Color3.fromRGB(60, 60, 60), 1)
 
@@ -185,17 +186,13 @@ function NK_Library:CreateWindow(cfg)
         end
     end)
 
-    -- // SETTINGS PAGE MOVED AFTER CreateTab DEFINITION
-    task.spawn(function()
-        repeat task.wait() until self.CreateTab
-        self.SettingsPage = self:CreateTab("⚙️")
-        local KeyInfo = Instance.new("TextLabel", self.Main)
-        KeyInfo.Size = UDim2.new(1, 0, 0, 20)
-        KeyInfo.Position = UDim2.new(0, 0, 1, -25)
-        KeyInfo.Text = "Show/Hide UI: (" .. tostring(self.Keybind.Name) .. ")"
-        Text(KeyInfo, 12, Theme.TextDim)
-        KeyInfo.Font = Enum.Font.GothamItalic
-    end)
+    -- POPRAWIONY NAPIS (Bez błędu GothamItalic)
+    local KeyInfo = Instance.new("TextLabel", self.Main)
+    KeyInfo.Size = UDim2.new(1, 0, 0, 20)
+    KeyInfo.Position = UDim2.new(0, 0, 1, -25)
+    KeyInfo.Text = "Show/Hide UI: (" .. tostring(self.Keybind.Name) .. ")"
+    Text(KeyInfo, 12, Theme.TextDim)
+    KeyInfo.Font = Enum.Font.Gotham -- Naprawiono błąd
 
     return self
 end
