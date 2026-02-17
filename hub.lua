@@ -139,14 +139,21 @@ function NK_Library:CreateWindow(cfg)
         end
     end
 
-    local CloseBtn = Instance.new("TextButton", Header)
+-- PRZYCISK ZAMYKANIA X (Teraz przypisany do głównego okna dla poprawnej pozycji)
+    local CloseBtn = Instance.new("TextButton", self.Main) -- Zmienione z Header na self.Main
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-    CloseBtn.Position = UDim2.new(1, -35, 0.5, -15)
+    CloseBtn.Position = UDim2.new(1, -35, 0, 5) -- Pozycja w prawym górnym rogu głównego okna
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     CloseBtn.Text = "×"
-    Text(CloseBtn, 20, Color3.fromRGB(255, 100, 100))
-    CloseBtn.MouseButton1Click:Connect(function() ToggleUI(false) end)
-    MobileButton.MouseButton1Click:Connect(function() ToggleUI(true) end)
+    CloseBtn.ZIndex = 10 -- Upewniamy się, że jest na wierzchu
+    Text(CloseBtn, 22, Color3.fromRGB(255, 100, 100))
+    Corner(CloseBtn, 6)
+    Stroke(CloseBtn, Color3.fromRGB(60, 60, 60), 1)
 
+    CloseBtn.MouseButton1Click:Connect(function() 
+        ToggleUI(false) 
+    end)
+    
     RunService.RenderStepped:Connect(function()
         Header.Position = UDim2.new(self.Main.Position.X.Scale, self.Main.Position.X.Offset + 150, self.Main.Position.Y.Scale, self.Main.Position.Y.Offset - 30)
         self.Side.Position = UDim2.new(self.Main.Position.X.Scale, self.Main.Position.X.Offset - 70, self.Main.Position.Y.Scale, self.Main.Position.Y.Offset + 40)
