@@ -7,7 +7,7 @@ local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
 
--- // THEME (Stud Hub style)
+-- // THEME
 local Theme = {
     Accent = Color3.fromRGB(255,165,0),
     Background = Color3.fromRGB(13,13,13),
@@ -41,10 +41,6 @@ local function Text(obj,size,color)
     obj.TextColor3 = color or Theme.Text
     obj.BackgroundTransparency = 1
 end
-
-----------------------------------------------------
--- DRAG
-----------------------------------------------------
 
 local function Drag(top,main)
     local drag = false
@@ -95,26 +91,18 @@ function NK_Library:CreateWindow(cfg)
     self.Gui = Instance.new("ScreenGui",CoreGui)
     self.Gui.Name = "StudHub"
 
-    ------------------------------------------------
-    -- MAIN
-    ------------------------------------------------
-
     self.Main = Instance.new("Frame",self.Gui)
     self.Main.Size = UDim2.new(0,520,0,340)
     self.Main.Position = UDim2.new(0.5,-260,0.5,-170)
     self.Main.BackgroundColor3 = Theme.Background
+    self.Main.ClipsDescendants = false
 
     Corner(self.Main,10)
     Stroke(self.Main)
 
-    ------------------------------------------------
-    -- HEADER (FLOATING)
-    ------------------------------------------------
-
     local Header = Instance.new("Frame",self.Gui)
     Header.Size = UDim2.new(0,220,0,45)
     Header.BackgroundColor3 = Theme.Surface
-
     Corner(Header,8)
     Stroke(Header,Theme.Accent,1)
 
@@ -125,14 +113,9 @@ function NK_Library:CreateWindow(cfg)
 
     Drag(Header,self.Main)
 
-    ------------------------------------------------
-    -- SIDEBAR FLOATING
-    ------------------------------------------------
-
     self.Side = Instance.new("Frame",self.Gui)
     self.Side.Size = UDim2.new(0,60,0,250)
     self.Side.BackgroundColor3 = Theme.Surface
-
     Corner(self.Side,8)
     Stroke(self.Side)
 
@@ -140,102 +123,78 @@ function NK_Library:CreateWindow(cfg)
     SideLayout.Padding = UDim.new(0,6)
     SideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-    ------------------------------------------------
-    -- FOLLOW SYSTEM
-    ------------------------------------------------
+    self.Container = Instance.new("Frame",self.Main)
+    self.Container.Size = UDim2.new(1,-20,1,-20)
+    self.Container.Position = UDim2.new(0,10,0,10)
+    self.Container.BackgroundTransparency = 1
 
-    RunService.RenderStepped:Connect(function()
-        Header.Position = UDim2.new(
-            self.Main.Position.X.Scale,
-            self.Main.Position.X.Offset + 150,
-            self.Main.Position.Y.Scale,
-            self.Main.Position.Y.Offset - 30
-        )
-
-        self.Side.Position = UDim2.new(
-            self.Main.Position.X.Scale,
-            self.Main.Position.X.Offset - 70,
-            self.Main.Position.Y.Scale,
-            self.Main.Position.Y.Offset + 40
-        )
-    end)
-
-    self.SettingsPage = self:CreateTab("⚙️") 
-
-    -- Napis informacyjny o Keybindzie
-    local KeyInfo = Instance.new("TextLabel", self.Main)
-    KeyInfo.Size = UDim2.new(1, 0, 0, 20)
-    KeyInfo.Position = UDim2.new(0, 0, 1, -25)
-    KeyInfo.BackgroundTransparency = 1
-    KeyInfo.Text = "Show/Hide UI: (" .. tostring(self.Keybind.Name) .. ")"
-    KeyInfo.TextColor3 = Theme.TextDim
-    KeyInfo.Font = Enum.Font.GothamItalic
-    KeyInfo.TextSize = 12
-    KeyInfo.ZIndex = 5
-
-    -- PRZYCISK MOBILE "NK HUB" (Góra ekranu)
+    -- // MOBILE SYSTEM & ANIMATIONS
     local MobileButton = Instance.new("TextButton", self.Gui)
     MobileButton.Name = "MobileOpen"
     MobileButton.Size = UDim2.new(0, 100, 0, 35)
-    MobileButton.Position = UDim2.new(0.5, -50, 0, 15)
+    MobileButton.Position = UDim2.new(0.5, -50, 0, -50) -- Start poza ekranem
     MobileButton.BackgroundColor3 = Theme.Surface
     MobileButton.Text = "NK HUB"
     MobileButton.TextColor3 = Theme.Accent
     MobileButton.Font = Enum.Font.GothamBold
     MobileButton.TextSize = 14
-    MobileButton.Visible = false -- Domyślnie ukryty
+    MobileButton.Visible = false
     Corner(MobileButton, 8)
     Stroke(MobileButton, Theme.Accent, 1)
 
-    -- Funkcja przełączania (Zintegrowana)
-    local function SetUIVisible(state)
-        self.Main.Visible = state
-        self.Side.Visible = state
-        Header.Visible = state
-        MobileButton.Visible = not state
+    local function ToggleUI(state)
+        if state then
+            self.Main.Visible = true
+            self.Side.Visible = true
+            Header.Visible = true
+            self.Main:TweenSize(UDim2.new(0,520,0,340), "Out", "Back", 0.3, true)
+            MobileButton:TweenPosition(UDim2.new(0.5, -50, 0, -50), "In", "Sine", 0.2, true, function() MobileButton.Visible = false end)
+        else
+            self.Main:TweenSize(UDim2.new(0,0,0,0), "In", "Back", 0.3, true, function()
+                self.Main.Visible = false
+                self.Side.Visible = false
+                Header.Visible = false
+                MobileButton.Visible = true
+                MobileButton:TweenPosition(UDim2.new(0.5, -50, 0, 15), "Out", "Back", 0.3, true)
+            end)
+        end
     end
 
-    -- Obsługa przycisku mobilnego
-    MobileButton.MouseButton1Click:Connect(function()
-        SetUIVisible(true)
-    end)
-
-    -- PRZYCISK ZAMYKANIA "X" (Na górnym pasku Header)
     local CloseBtn = Instance.new("TextButton", Header)
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
     CloseBtn.Position = UDim2.new(1, -35, 0.5, -15)
     CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     CloseBtn.Text = "×"
     CloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
-    CloseBtn.TextSize = 20
-    CloseBtn.Font = Enum.Font.GothamBold
+    Text(CloseBtn, 20)
     Corner(CloseBtn, 6)
     Stroke(CloseBtn, Color3.fromRGB(60, 60, 60), 1)
 
-    CloseBtn.MouseButton1Click:Connect(function()
-        SetUIVisible(false)
+    CloseBtn.MouseButton1Click:Connect(function() ToggleUI(false) end)
+    MobileButton.MouseButton1Click:Connect(function() ToggleUI(true) end)
+
+    RunService.RenderStepped:Connect(function()
+        Header.Position = UDim2.new(self.Main.Position.X.Scale, self.Main.Position.X.Offset + 150, self.Main.Position.Y.Scale, self.Main.Position.Y.Offset - 30)
+        self.Side.Position = UDim2.new(self.Main.Position.X.Scale, self.Main.Position.X.Offset - 70, self.Main.Position.Y.Scale, self.Main.Position.Y.Offset + 40)
     end)
-
-    ------------------------------------------------
-    -- CONTAINER
-    ------------------------------------------------
-
-    self.Container = Instance.new("Frame",self.Main)
-    self.Container.Size = UDim2.new(1,-20,1,-20)
-    self.Container.Position = UDim2.new(0,10,0,10)
-    self.Container.BackgroundTransparency = 1
-
-    ------------------------------------------------
-    -- KEYBIND
-    ------------------------------------------------
 
     UIS.InputBegan:Connect(function(i,g)
         if g then return end
         if i.KeyCode == self.Keybind then
-            self.Main.Visible = not self.Main.Visible
-            self.Side.Visible = self.Main.Visible
-            Header.Visible = self.Main.Visible
+            ToggleUI(not self.Main.Visible)
         end
+    end)
+
+    -- // SETTINGS PAGE MOVED AFTER CreateTab DEFINITION
+    task.spawn(function()
+        repeat task.wait() until self.CreateTab
+        self.SettingsPage = self:CreateTab("⚙️")
+        local KeyInfo = Instance.new("TextLabel", self.Main)
+        KeyInfo.Size = UDim2.new(1, 0, 0, 20)
+        KeyInfo.Position = UDim2.new(0, 0, 1, -25)
+        KeyInfo.Text = "Show/Hide UI: (" .. tostring(self.Keybind.Name) .. ")"
+        Text(KeyInfo, 12, Theme.TextDim)
+        KeyInfo.Font = Enum.Font.GothamItalic
     end)
 
     return self
@@ -252,20 +211,15 @@ function NK_Library:CreateTab(name)
     Button.Size = UDim2.new(0,40,0,40)
     Button.BackgroundColor3 = Theme.Surface2
     Button.Text = ""
-
     Corner(Button,6)
 
-    -- Wklej to pod Corner(Button, 6) w image_4d723f.png
     local BtnLabel = Instance.new("TextLabel", Button)
     BtnLabel.Size = UDim2.new(1, 0, 1, 0)
-    BtnLabel.Text = name -- Ustawia nazwę lub emotkę, którą wpiszesz w skrypcie
-    BtnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    BtnLabel.BackgroundTransparency = 1
-    BtnLabel.Font = Enum.Font.GothamBold
-    BtnLabel.TextSize = 28
+    BtnLabel.Text = name
+    Text(BtnLabel, 28)
 
     local Indicator = Instance.new("Frame",Button)
-    Indicator.Name = "Indicator" -- POPRAWKA: Nadanie nazwy dla pętli
+    Indicator.Name = "Indicator"
     Indicator.Size = UDim2.new(0,3,1,0)
     Indicator.BackgroundColor3 = Theme.Accent
     Indicator.Visible = false
@@ -279,65 +233,49 @@ function NK_Library:CreateTab(name)
     local Layout = Instance.new("UIListLayout",Page)
     Layout.Padding = UDim.new(0,6)
 
--- Odnajdź tę sekcję w funkcji NK_Library:CreateTab(name)
-Button.MouseButton1Click:Connect(function()
-    for _, v in pairs(self.Container:GetChildren()) do
-        if v:IsA("ScrollingFrame") then
-            v.Visible = false
+    Button.MouseButton1Click:Connect(function()
+        for _, v in pairs(self.Container:GetChildren()) do
+            if v:IsA("ScrollingFrame") then v.Visible = false end
         end
-    end
-
-    for _, v in pairs(self.Side:GetChildren()) do
-        -- KLUCZOWA POPRAWKA: Sprawdzamy czy to TextButton i czy MA Indicator
-        if v:IsA("TextButton") then
-            local targetIndicator = v:FindFirstChild("Indicator")
-            if targetIndicator then
-                targetIndicator.Visible = false
+        for _, v in pairs(self.Side:GetChildren()) do
+            if v:IsA("TextButton") and v:FindFirstChild("Indicator") then
+                v.Indicator.Visible = false
             end
         end
-    end
-
-    Page.Visible = true
-    -- Upewnij się, że lokalna zmienna Indicator jest dostępna w tym zasięgu
-    if Indicator then 
-        Indicator.Visible = true 
-    end
-end)
-
-    ------------------------------------------------
-    -- TOGGLE (REAL STUD HUB STYLE)
-    ------------------------------------------------
+        Page.Visible = true
+        Indicator.Visible = true
+        
+        -- Pop animation dla przycisku taba
+        Button:TweenSize(UDim2.new(0,35,0,35), "Out", "Quad", 0.1, true, function()
+            Button:TweenSize(UDim2.new(0,40,0,40), "Out", "Quad", 0.1, true)
+        end)
+    end)
 
     function Tab:CreateToggle(text,default,callback)
         local state = default or false
-
         local Card = Instance.new("Frame",Page)
         Card.Size = UDim2.new(1,-6,0,45)
         Card.BackgroundColor3 = Theme.Surface
-
         Corner(Card,6)
         Stroke(Card)
 
--- Wewnątrz NK_Library:CreateTab -> Tab:CreateToggle
         local Label = Instance.new("TextLabel", Card)
         Label.Position = UDim2.new(0, 10, 0, 0)
         Label.Size = UDim2.new(1, -70, 1, 0)
-        Label.Text = text -- TA LINIA JEST KLUCZOWA, musi przypisywać zmienną 'text'
-        Label.TextXAlignment = Enum.TextXAlignment.Left -- Opcjonalnie: wyrównanie do lewej
+        Label.Text = text
+        Label.TextXAlignment = Enum.TextXAlignment.Left
         Text(Label, 14)
 
         local Toggle = Instance.new("Frame",Card)
         Toggle.Size = UDim2.new(0,36,0,18)
         Toggle.Position = UDim2.new(1,-50,0.5,-9)
         Toggle.BackgroundColor3 = state and Theme.Accent or Theme.Surface2
-
         Corner(Toggle,20)
 
         local Dot = Instance.new("Frame",Toggle)
         Dot.Size = UDim2.new(0,14,0,14)
         Dot.Position = state and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7)
         Dot.BackgroundColor3 = Color3.new(1,1,1)
-
         Corner(Dot,20)
 
         local Click = Instance.new("TextButton",Card)
@@ -347,18 +285,9 @@ end)
 
         Click.MouseButton1Click:Connect(function()
             state = not state
-
-            TweenService:Create(Dot,TweenInfo.new(.2),{
-                Position = state and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7)
-            }):Play()
-
-            TweenService:Create(Toggle,TweenInfo.new(.2),{
-                BackgroundColor3 = state and Theme.Accent or Theme.Surface2
-            }):Play()
-
-            if callback then
-                callback(state)
-            end
+            TweenService:Create(Dot,TweenInfo.new(.2),{Position = state and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7)}):Play()
+            TweenService:Create(Toggle,TweenInfo.new(.2),{BackgroundColor3 = state and Theme.Accent or Theme.Surface2}):Play()
+            if callback then callback(state) end
         end)
     end
 
