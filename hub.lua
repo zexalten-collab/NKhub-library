@@ -47,19 +47,16 @@ end
 ----------------------------------------------------
 
 local function Drag(top,main)
-
     local drag = false
     local start
     local pos
 
     top.InputBegan:Connect(function(input)
-
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             drag = true
             start = input.Position
             pos = main.Position
         end
-
     end)
 
     UIS.InputEnded:Connect(function(input)
@@ -69,22 +66,16 @@ local function Drag(top,main)
     end)
 
     UIS.InputChanged:Connect(function(input)
-
         if drag and input.UserInputType == Enum.UserInputType.MouseMovement then
-
             local delta = input.Position - start
-
             main.Position = UDim2.new(
                 pos.X.Scale,
                 pos.X.Offset + delta.X,
                 pos.Y.Scale,
                 pos.Y.Offset + delta.Y
             )
-
         end
-
     end)
-
 end
 
 ----------------------------------------------------
@@ -92,7 +83,6 @@ end
 ----------------------------------------------------
 
 function NK_Library:CreateWindow(cfg)
-
     local self = setmetatable({},NK_Library)
 
     cfg = cfg or {}
@@ -155,23 +145,19 @@ function NK_Library:CreateWindow(cfg)
     ------------------------------------------------
 
     RunService.RenderStepped:Connect(function()
+        Header.Position = UDim2.new(
+            self.Main.Position.X.Scale,
+            self.Main.Position.X.Offset + 150,
+            self.Main.Position.Y.Scale,
+            self.Main.Position.Y.Offset - 30
+        )
 
-        Header.Position =
-            UDim2.new(
-                self.Main.Position.X.Scale,
-                self.Main.Position.X.Offset + 150,
-                self.Main.Position.Y.Scale,
-                self.Main.Position.Y.Offset - 30
-            )
-
-        self.Side.Position =
-            UDim2.new(
-                self.Main.Position.X.Scale,
-                self.Main.Position.X.Offset - 70,
-                self.Main.Position.Y.Scale,
-                self.Main.Position.Y.Offset + 40
-            )
-
+        self.Side.Position = UDim2.new(
+            self.Main.Position.X.Scale,
+            self.Main.Position.X.Offset - 70,
+            self.Main.Position.Y.Scale,
+            self.Main.Position.Y.Offset + 40
+        )
     end)
 
     ------------------------------------------------
@@ -188,21 +174,15 @@ function NK_Library:CreateWindow(cfg)
     ------------------------------------------------
 
     UIS.InputBegan:Connect(function(i,g)
-
         if g then return end
-
         if i.KeyCode == self.Keybind then
-
             self.Main.Visible = not self.Main.Visible
             self.Side.Visible = self.Main.Visible
             Header.Visible = self.Main.Visible
-
         end
-
     end)
 
     return self
-
 end
 
 ----------------------------------------------------
@@ -210,7 +190,6 @@ end
 ----------------------------------------------------
 
 function NK_Library:CreateTab(name)
-
     local Tab = {}
 
     local Button = Instance.new("TextButton",self.Side)
@@ -221,6 +200,7 @@ function NK_Library:CreateTab(name)
     Corner(Button,6)
 
     local Indicator = Instance.new("Frame",Button)
+    Indicator.Name = "Indicator" -- POPRAWKA: Nadanie nazwy dla pętli
     Indicator.Size = UDim2.new(0,3,1,0)
     Indicator.BackgroundColor3 = Theme.Accent
     Indicator.Visible = false
@@ -235,7 +215,6 @@ function NK_Library:CreateTab(name)
     Layout.Padding = UDim.new(0,6)
 
     Button.MouseButton1Click:Connect(function()
-
         for _,v in pairs(self.Container:GetChildren()) do
             if v:IsA("ScrollingFrame") then
                 v.Visible = false
@@ -243,14 +222,17 @@ function NK_Library:CreateTab(name)
         end
 
         for _,v in pairs(self.Side:GetChildren()) do
+            -- POPRAWKA: Sprawdzanie czy element to przycisk i czy ma indykator
             if v:IsA("TextButton") then
-                v.Indicator.Visible = false
+                local ind = v:FindFirstChild("Indicator")
+                if ind then
+                    ind.Visible = false
+                end
             end
         end
 
         Page.Visible = true
         Indicator.Visible = true
-
     end)
 
     ------------------------------------------------
@@ -258,7 +240,6 @@ function NK_Library:CreateTab(name)
     ------------------------------------------------
 
     function Tab:CreateToggle(text,default,callback)
-
         local state = default or false
 
         local Card = Instance.new("Frame",Page)
@@ -277,17 +258,13 @@ function NK_Library:CreateTab(name)
         local Toggle = Instance.new("Frame",Card)
         Toggle.Size = UDim2.new(0,36,0,18)
         Toggle.Position = UDim2.new(1,-50,0.5,-9)
-        Toggle.BackgroundColor3 =
-            state and Theme.Accent or Theme.Surface2
+        Toggle.BackgroundColor3 = state and Theme.Accent or Theme.Surface2
 
         Corner(Toggle,20)
 
         local Dot = Instance.new("Frame",Toggle)
         Dot.Size = UDim2.new(0,14,0,14)
-        Dot.Position =
-            state and UDim2.new(1,-16,0.5,-7)
-            or UDim2.new(0,2,0.5,-7)
-
+        Dot.Position = state and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7)
         Dot.BackgroundColor3 = Color3.new(1,1,1)
 
         Corner(Dot,20)
@@ -298,35 +275,23 @@ function NK_Library:CreateTab(name)
         Click.Text = ""
 
         Click.MouseButton1Click:Connect(function()
-
             state = not state
 
             TweenService:Create(Dot,TweenInfo.new(.2),{
-
-                Position =
-                    state and UDim2.new(1,-16,0.5,-7)
-                    or UDim2.new(0,2,0.5,-7)
-
+                Position = state and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7)
             }):Play()
 
             TweenService:Create(Toggle,TweenInfo.new(.2),{
-
-                BackgroundColor3 =
-                    state and Theme.Accent
-                    or Theme.Surface2
-
+                BackgroundColor3 = state and Theme.Accent or Theme.Surface2
             }):Play()
 
             if callback then
                 callback(state)
             end
-
         end)
-
     end
 
     return Tab
-
 end
 
 return NK_Library
