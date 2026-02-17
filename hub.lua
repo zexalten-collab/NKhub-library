@@ -160,6 +160,62 @@ function NK_Library:CreateWindow(cfg)
         )
     end)
 
+    self.SettingsPage = self:CreateTab("⚙️") 
+
+    -- Napis informacyjny o Keybindzie
+    local KeyInfo = Instance.new("TextLabel", self.Main)
+    KeyInfo.Size = UDim2.new(1, 0, 0, 20)
+    KeyInfo.Position = UDim2.new(0, 0, 1, -25)
+    KeyInfo.BackgroundTransparency = 1
+    KeyInfo.Text = "Show/Hide UI: (" .. tostring(self.Keybind.Name) .. ")"
+    KeyInfo.TextColor3 = Theme.TextDim
+    KeyInfo.Font = Enum.Font.GothamItalic
+    KeyInfo.TextSize = 12
+    KeyInfo.ZIndex = 5
+
+    -- PRZYCISK MOBILE "NK HUB" (Góra ekranu)
+    local MobileButton = Instance.new("TextButton", self.Gui)
+    MobileButton.Name = "MobileOpen"
+    MobileButton.Size = UDim2.new(0, 100, 0, 35)
+    MobileButton.Position = UDim2.new(0.5, -50, 0, 15)
+    MobileButton.BackgroundColor3 = Theme.Surface
+    MobileButton.Text = "NK HUB"
+    MobileButton.TextColor3 = Theme.Accent
+    MobileButton.Font = Enum.Font.GothamBold
+    MobileButton.TextSize = 14
+    MobileButton.Visible = false -- Domyślnie ukryty
+    Corner(MobileButton, 8)
+    Stroke(MobileButton, Theme.Accent, 1)
+
+    -- Funkcja przełączania (Zintegrowana)
+    local function SetUIVisible(state)
+        self.Main.Visible = state
+        self.Side.Visible = state
+        Header.Visible = state
+        MobileButton.Visible = not state
+    end
+
+    -- Obsługa przycisku mobilnego
+    MobileButton.MouseButton1Click:Connect(function()
+        SetUIVisible(true)
+    end)
+
+    -- PRZYCISK ZAMYKANIA "X" (Na górnym pasku Header)
+    local CloseBtn = Instance.new("TextButton", Header)
+    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+    CloseBtn.Position = UDim2.new(1, -35, 0.5, -15)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    CloseBtn.Text = "×"
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+    CloseBtn.TextSize = 20
+    CloseBtn.Font = Enum.Font.GothamBold
+    Corner(CloseBtn, 6)
+    Stroke(CloseBtn, Color3.fromRGB(60, 60, 60), 1)
+
+    CloseBtn.MouseButton1Click:Connect(function()
+        SetUIVisible(false)
+    end)
+
     ------------------------------------------------
     -- CONTAINER
     ------------------------------------------------
@@ -206,7 +262,7 @@ function NK_Library:CreateTab(name)
     BtnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     BtnLabel.BackgroundTransparency = 1
     BtnLabel.Font = Enum.Font.GothamBold
-    BtnLabel.TextSize = 24
+    BtnLabel.TextSize = 28
 
     local Indicator = Instance.new("Frame",Button)
     Indicator.Name = "Indicator" -- POPRAWKA: Nadanie nazwy dla pętli
