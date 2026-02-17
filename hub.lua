@@ -113,14 +113,18 @@ function NK_Library:CreateWindow(cfg)
 
     -- Mobile System
     local MobileButton = Instance.new("TextButton", self.Gui)
+    MobileButton.Name = "MobileOpen"
     MobileButton.Size = UDim2.new(0, 100, 0, 35)
     MobileButton.Position = UDim2.new(0.5, -50, 0, 15)
-    MobileButton.BackgroundColor3 = Theme.Surface
+    MobileButton.BackgroundColor3 = Color3.fromRGB(15, 15, 15) -- Ciemne tło
     MobileButton.Text = "NK HUB"
-    MobileButton.Visible = false
-    Text(MobileButton, 14, Theme.Accent)
+    MobileButton.TextColor3 = Theme.Accent
+    MobileButton.Font = Enum.Font.GothamBold
+    MobileButton.TextSize = 14
+    MobileButton.Visible = false 
+    MobileButton.ZIndex = 100 -- Zawsze na wierzchu
     Corner(MobileButton, 8)
-    Stroke(MobileButton, Theme.Accent, 1)
+    Stroke(MobileButton, Theme.Accent, 1) -- Pomarańczowa obwódka
 
     local function ToggleUI(state)
         if state then
@@ -139,27 +143,21 @@ function NK_Library:CreateWindow(cfg)
         end
     end
 
--- PRZYCISK ZAMYKANIA X (Teraz przypisany do głównego okna dla poprawnej pozycji)
-    local CloseBtn = Instance.new("TextButton")
-    CloseBtn.Name = "CloseButton"
-    CloseBtn.Parent = self.Main -- Rodzicem jest główne okno
-    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-    -- Ustawiamy go sztywno w prawym górnym rogu
-    CloseBtn.Position = UDim2.new(1, -35, 0, 5) 
-    CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+-- PRZYCISK ZAMYKANIA X (Prawy górny róg GŁÓWNEGO okna)
+    local CloseBtn = Instance.new("TextButton", self.Main) -- MUSI BYĆ self.Main
+    CloseBtn.Name = "FinalCloseBtn"
+    CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+    -- Ta pozycja ustawi go idealnie w prawym górnym rogu czarnego tła
+    CloseBtn.Position = UDim2.new(1, -32, 0, 6) 
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     CloseBtn.Text = "×"
-    CloseBtn.ZIndex = 20 -- Bardzo wysoki priorytet warstwy
-    
-    -- Poprawka Text() - upewnij się, że używasz zwykłego Gotham
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+    CloseBtn.TextSize = 20
     CloseBtn.Font = Enum.Font.GothamBold
-    CloseBtn.TextSize = 22
-    CloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
-    CloseBtn.BackgroundTransparency = 0 -- Ustawiamy 0, by był widoczny jako kwadrat
-    
+    CloseBtn.ZIndex = 50 -- Gwarantuje, że nic go nie przykryje
     Corner(CloseBtn, 6)
-    Stroke(CloseBtn, Color3.fromRGB(60, 60, 60), 1)
+    Stroke(CloseBtn, Color3.fromRGB(50, 50, 50), 1)
 
-    -- Funkcja zamykania z animacją
     CloseBtn.MouseButton1Click:Connect(function()
         ToggleUI(false)
     end)
