@@ -43,10 +43,7 @@ local function Text(obj,size,color)
 end
 
 local function Drag(top,main)
-    local drag = false
-    local start
-    local pos
-
+    local drag, start, pos
     top.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             drag = true
@@ -54,22 +51,13 @@ local function Drag(top,main)
             pos = main.Position
         end
     end)
-
     UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            drag = false
-        end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end
     end)
-
     UIS.InputChanged:Connect(function(input)
         if drag and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - start
-            main.Position = UDim2.new(
-                pos.X.Scale,
-                pos.X.Offset + delta.X,
-                pos.Y.Scale,
-                pos.Y.Offset + delta.Y
-            )
+            main.Position = UDim2.new(pos.X.Scale, pos.X.Offset + delta.X, pos.Y.Scale, pos.Y.Offset + delta.Y)
         end
     end)
 end
@@ -80,13 +68,10 @@ end
 
 function NK_Library:CreateWindow(cfg)
     local self = setmetatable({},NK_Library)
-
     cfg = cfg or {}
     self.Keybind = cfg.Keybind or Enum.KeyCode.RightControl
 
-    if CoreGui:FindFirstChild("StudHub") then
-        CoreGui.StudHub:Destroy()
-    end
+    if CoreGui:FindFirstChild("StudHub") then CoreGui.StudHub:Destroy() end
 
     self.Gui = Instance.new("ScreenGui",CoreGui)
     self.Gui.Name = "StudHub"
@@ -95,8 +80,7 @@ function NK_Library:CreateWindow(cfg)
     self.Main.Size = UDim2.new(0,520,0,340)
     self.Main.Position = UDim2.new(0.5,-260,0.5,-170)
     self.Main.BackgroundColor3 = Theme.Background
-    self.Main.ClipsDescendants = true -- Zmienione na true dla animacji otwierania
-
+    self.Main.ClipsDescendants = true
     Corner(self.Main,10)
     Stroke(self.Main)
 
@@ -110,7 +94,6 @@ function NK_Library:CreateWindow(cfg)
     Title.Size = UDim2.new(1,0,1,0)
     Title.Text = cfg.Name or "STUD HUB"
     Text(Title,16)
-
     Drag(Header,self.Main)
 
     self.Side = Instance.new("Frame",self.Gui)
@@ -128,17 +111,14 @@ function NK_Library:CreateWindow(cfg)
     self.Container.Position = UDim2.new(0,10,0,10)
     self.Container.BackgroundTransparency = 1
 
-    -- // MOBILE SYSTEM & ANIMATIONS
+    -- Mobile System
     local MobileButton = Instance.new("TextButton", self.Gui)
-    MobileButton.Name = "MobileOpen"
     MobileButton.Size = UDim2.new(0, 100, 0, 35)
     MobileButton.Position = UDim2.new(0.5, -50, 0, 15)
     MobileButton.BackgroundColor3 = Theme.Surface
     MobileButton.Text = "NK HUB"
-    MobileButton.TextColor3 = Theme.Accent
-    MobileButton.Font = Enum.Font.GothamBold
-    MobileButton.TextSize = 14
     MobileButton.Visible = false
+    Text(MobileButton, 14, Theme.Accent)
     Corner(MobileButton, 8)
     Stroke(MobileButton, Theme.Accent, 1)
 
@@ -159,18 +139,11 @@ function NK_Library:CreateWindow(cfg)
         end
     end
 
-    -- PRZYCISK ZAMYKANIA X
     local CloseBtn = Instance.new("TextButton", Header)
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
     CloseBtn.Position = UDim2.new(1, -35, 0.5, -15)
-    CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     CloseBtn.Text = "×"
-    CloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
-    CloseBtn.TextSize = 25
-    CloseBtn.Font = Enum.Font.GothamBold
-    Corner(CloseBtn, 6)
-    Stroke(CloseBtn, Color3.fromRGB(60, 60, 60), 1)
-
+    Text(CloseBtn, 20, Color3.fromRGB(255, 100, 100))
     CloseBtn.MouseButton1Click:Connect(function() ToggleUI(false) end)
     MobileButton.MouseButton1Click:Connect(function() ToggleUI(true) end)
 
@@ -180,19 +153,16 @@ function NK_Library:CreateWindow(cfg)
     end)
 
     UIS.InputBegan:Connect(function(i,g)
-        if g then return end
-        if i.KeyCode == self.Keybind then
-            ToggleUI(not self.Main.Visible)
-        end
+        if not g and i.KeyCode == self.Keybind then ToggleUI(not self.Main.Visible) end
     end)
 
-    -- POPRAWIONY NAPIS (Bez błędu GothamItalic)
+    -- Info label o keybindzie (Poprawiony font)
     local KeyInfo = Instance.new("TextLabel", self.Main)
     KeyInfo.Size = UDim2.new(1, 0, 0, 20)
     KeyInfo.Position = UDim2.new(0, 0, 1, -25)
     KeyInfo.Text = "Show/Hide UI: (" .. tostring(self.Keybind.Name) .. ")"
     Text(KeyInfo, 12, Theme.TextDim)
-    KeyInfo.Font = Enum.Font.Gotham -- Naprawiono błąd
+    KeyInfo.Font = Enum.Font.Gotham -- Naprawiono błąd GothamItalic
 
     return self
 end
@@ -203,7 +173,6 @@ end
 
 function NK_Library:CreateTab(name)
     local Tab = {}
-
     local Button = Instance.new("TextButton",self.Side)
     Button.Size = UDim2.new(0,40,0,40)
     Button.BackgroundColor3 = Theme.Surface2
@@ -226,25 +195,21 @@ function NK_Library:CreateTab(name)
     Page.BackgroundTransparency = 1
     Page.Visible = false
     Page.ScrollBarThickness = 0
-
-    local Layout = Instance.new("UIListLayout",Page)
-    Layout.Padding = UDim.new(0,6)
+    Instance.new("UIListLayout",Page).Padding = UDim.new(0,6)
 
     Button.MouseButton1Click:Connect(function()
         for _, v in pairs(self.Container:GetChildren()) do
             if v:IsA("ScrollingFrame") then v.Visible = false end
         end
         for _, v in pairs(self.Side:GetChildren()) do
-            if v:IsA("TextButton") and v:FindFirstChild("Indicator") then
-                v.Indicator.Visible = false
-            end
+            if v:IsA("TextButton") and v:FindFirstChild("Indicator") then v.Indicator.Visible = false end
         end
         Page.Visible = true
         Indicator.Visible = true
         
-        -- Pop animation dla przycisku taba
+        -- Tab Pop Animation
         Button:TweenSize(UDim2.new(0,35,0,35), "Out", "Quad", 0.1, true, function()
-            Button:TweenSize(UDim2.new(0,40,0,40), "Out", "Quad", 0.1, true)
+            Button:TweenSize(UDim2.new(0,40,0,40), "Out", "Quad", 0.1)
         end)
     end)
 
@@ -279,7 +244,6 @@ function NK_Library:CreateTab(name)
         Click.Size = UDim2.new(1,0,1,0)
         Click.BackgroundTransparency = 1
         Click.Text = ""
-
         Click.MouseButton1Click:Connect(function()
             state = not state
             TweenService:Create(Dot,TweenInfo.new(.2),{Position = state and UDim2.new(1,-16,0.5,-7) or UDim2.new(0,2,0.5,-7)}):Play()
@@ -287,7 +251,6 @@ function NK_Library:CreateTab(name)
             if callback then callback(state) end
         end)
     end
-
     return Tab
 end
 
