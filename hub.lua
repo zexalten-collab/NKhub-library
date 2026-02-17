@@ -206,7 +206,7 @@ function NK_Library:CreateTab(name)
     BtnLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     BtnLabel.BackgroundTransparency = 1
     BtnLabel.Font = Enum.Font.GothamBold
-    BtnLabel.TextSize = 14
+    BtnLabel.TextSize = 24
 
     local Indicator = Instance.new("Frame",Button)
     Indicator.Name = "Indicator" -- POPRAWKA: Nadanie nazwy dla pętli
