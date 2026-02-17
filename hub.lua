@@ -140,18 +140,28 @@ function NK_Library:CreateWindow(cfg)
     end
 
 -- PRZYCISK ZAMYKANIA X (Teraz przypisany do głównego okna dla poprawnej pozycji)
-    local CloseBtn = Instance.new("TextButton", self.Main) -- Zmienione z Header na self.Main
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Name = "CloseButton"
+    CloseBtn.Parent = self.Main -- Rodzicem jest główne okno
     CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-    CloseBtn.Position = UDim2.new(1, -35, 0, 5) -- Pozycja w prawym górnym rogu głównego okna
+    -- Ustawiamy go sztywno w prawym górnym rogu
+    CloseBtn.Position = UDim2.new(1, -35, 0, 5) 
     CloseBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     CloseBtn.Text = "×"
-    CloseBtn.ZIndex = 10 -- Upewniamy się, że jest na wierzchu
-    Text(CloseBtn, 22, Color3.fromRGB(255, 100, 100))
+    CloseBtn.ZIndex = 20 -- Bardzo wysoki priorytet warstwy
+    
+    -- Poprawka Text() - upewnij się, że używasz zwykłego Gotham
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextSize = 22
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+    CloseBtn.BackgroundTransparency = 0 -- Ustawiamy 0, by był widoczny jako kwadrat
+    
     Corner(CloseBtn, 6)
     Stroke(CloseBtn, Color3.fromRGB(60, 60, 60), 1)
 
-    CloseBtn.MouseButton1Click:Connect(function() 
-        ToggleUI(false) 
+    -- Funkcja zamykania z animacją
+    CloseBtn.MouseButton1Click:Connect(function()
+        ToggleUI(false)
     end)
     
     RunService.RenderStepped:Connect(function()
