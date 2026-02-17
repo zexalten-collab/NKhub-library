@@ -2,93 +2,85 @@ local NK_Library = {}
 NK_Library.__index = NK_Library
 
 -- // SERVICES
-local UserInputService = game:GetService("UserInputService")
+local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
 
--- // CONFIG
-local ThemeColor = Color3.fromRGB(255,165,0)
-local Background = Color3.fromRGB(16,16,16)
-local LightBackground = Color3.fromRGB(26,26,26)
-local StrokeColor = Color3.fromRGB(60,60,60)
+-- // THEME (Stud Hub style)
+local Theme = {
+    Accent = Color3.fromRGB(255,165,0),
+    Background = Color3.fromRGB(13,13,13),
+    Surface = Color3.fromRGB(18,18,18),
+    Surface2 = Color3.fromRGB(24,24,24),
+    Stroke = Color3.fromRGB(40,40,40),
+    Text = Color3.fromRGB(255,255,255),
+    TextDim = Color3.fromRGB(140,140,140)
+}
 
 ----------------------------------------------------
 -- UTILS
 ----------------------------------------------------
 
-local function CreateCorner(obj, radius)
+local function Corner(obj,r)
     local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0,radius or 8)
+    c.CornerRadius = UDim.new(0,r)
     c.Parent = obj
 end
 
-local function CreateStroke(obj, color, thickness)
+local function Stroke(obj,color,t)
     local s = Instance.new("UIStroke")
-    s.Color = color or StrokeColor
-    s.Thickness = thickness or 1
+    s.Color = color or Theme.Stroke
+    s.Thickness = t or 1
     s.Parent = obj
 end
 
-local function ApplyText(label, size)
-    label.Font = Enum.Font.GothamBold
-    label.TextSize = size or 14
-    label.TextColor3 = Color3.new(1,1,1)
-    label.RichText = true
+local function Text(obj,size,color)
+    obj.Font = Enum.Font.GothamBold
+    obj.TextSize = size
+    obj.TextColor3 = color or Theme.Text
+    obj.BackgroundTransparency = 1
 end
 
 ----------------------------------------------------
--- DRAG SYSTEM (FIXED)
+-- DRAG
 ----------------------------------------------------
 
-local function MakeDraggable(topbar, object)
+local function Drag(top,main)
 
-    local dragging = false
-    local dragInput
-    local dragStart
-    local startPos
+    local drag = false
+    local start
+    local pos
 
-    local function update(input)
-        local delta = input.Position - dragStart
-
-        object.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-
-    topbar.InputBegan:Connect(function(input)
+    top.InputBegan:Connect(function(input)
 
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-
-            dragging = true
-            dragStart = input.Position
-            startPos = object.Position
-
-            input.Changed:Connect(function()
-
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-
-            end)
-        end
-    end)
-
-    topbar.InputChanged:Connect(function(input)
-
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
+            drag = true
+            start = input.Position
+            pos = main.Position
         end
 
     end)
 
-    UserInputService.InputChanged:Connect(function(input)
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            drag = false
+        end
+    end)
 
-        if input == dragInput and dragging then
-            update(input)
+    UIS.InputChanged:Connect(function(input)
+
+        if drag and input.UserInputType == Enum.UserInputType.MouseMovement then
+
+            local delta = input.Position - start
+
+            main.Position = UDim2.new(
+                pos.X.Scale,
+                pos.X.Offset + delta.X,
+                pos.Y.Scale,
+                pos.Y.Offset + delta.Y
+            )
+
         end
 
     end)
@@ -99,99 +91,111 @@ end
 -- WINDOW
 ----------------------------------------------------
 
-function NK_Library:CreateWindow(config)
+function NK_Library:CreateWindow(cfg)
 
-    local self = setmetatable({}, NK_Library)
+    local self = setmetatable({},NK_Library)
 
-    config = config or {}
+    cfg = cfg or {}
+    self.Keybind = cfg.Keybind or Enum.KeyCode.RightControl
 
-    self.Keybind = config.Keybind or Enum.KeyCode.RightControl
-    self.Visible = true
-    self.Tabs = {}
-
-    if CoreGui:FindFirstChild("NK_UI") then
-        CoreGui.NK_UI:Destroy()
+    if CoreGui:FindFirstChild("StudHub") then
+        CoreGui.StudHub:Destroy()
     end
 
-    self.Gui = Instance.new("ScreenGui")
-    self.Gui.Name = "NK_UI"
-    self.Gui.Parent = CoreGui
-    self.Gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+    self.Gui = Instance.new("ScreenGui",CoreGui)
+    self.Gui.Name = "StudHub"
 
     ------------------------------------------------
     -- MAIN
     ------------------------------------------------
 
-    self.Main = Instance.new("Frame")
-    self.Main.Parent = self.Gui
-    self.Main.Size = UDim2.new(0,550,0,360)
-    self.Main.Position = UDim2.new(0.5,-275,0.5,-180)
-    self.Main.BackgroundColor3 = Background
+    self.Main = Instance.new("Frame",self.Gui)
+    self.Main.Size = UDim2.new(0,520,0,340)
+    self.Main.Position = UDim2.new(0.5,-260,0.5,-170)
+    self.Main.BackgroundColor3 = Theme.Background
 
-    CreateCorner(self.Main,10)
-    CreateStroke(self.Main)
+    Corner(self.Main,10)
+    Stroke(self.Main)
 
     ------------------------------------------------
-    -- TOPBAR
+    -- HEADER (FLOATING)
     ------------------------------------------------
 
-    local Topbar = Instance.new("Frame")
-    Topbar.Parent = self.Main
-    Topbar.Size = UDim2.new(1,0,0,40)
-    Topbar.BackgroundColor3 = LightBackground
+    local Header = Instance.new("Frame",self.Gui)
+    Header.Size = UDim2.new(0,220,0,45)
+    Header.BackgroundColor3 = Theme.Surface
 
-    CreateCorner(Topbar,10)
-    CreateStroke(Topbar,ThemeColor,1)
+    Corner(Header,8)
+    Stroke(Header,Theme.Accent,1)
 
-    local Title = Instance.new("TextLabel")
-    Title.Parent = Topbar
+    local Title = Instance.new("TextLabel",Header)
     Title.Size = UDim2.new(1,0,1,0)
-    Title.BackgroundTransparency = 1
-    Title.Text = config.Name or "STUD HUB"
+    Title.Text = cfg.Name or "STUD HUB"
+    Text(Title,16)
 
-    ApplyText(Title,16)
-
-    MakeDraggable(Topbar,self.Main)
+    Drag(Header,self.Main)
 
     ------------------------------------------------
-    -- SIDEBAR
+    -- SIDEBAR FLOATING
     ------------------------------------------------
 
-    self.Sidebar = Instance.new("Frame")
-    self.Sidebar.Parent = self.Main
-    self.Sidebar.Size = UDim2.new(0,140,1,-40)
-    self.Sidebar.Position = UDim2.new(0,0,0,40)
-    self.Sidebar.BackgroundColor3 = LightBackground
+    self.Side = Instance.new("Frame",self.Gui)
+    self.Side.Size = UDim2.new(0,60,0,250)
+    self.Side.BackgroundColor3 = Theme.Surface
 
-    CreateStroke(self.Sidebar)
+    Corner(self.Side,8)
+    Stroke(self.Side)
 
-    local Layout = Instance.new("UIListLayout")
-    Layout.Parent = self.Sidebar
-    Layout.Padding = UDim.new(0,5)
+    local SideLayout = Instance.new("UIListLayout",self.Side)
+    SideLayout.Padding = UDim.new(0,6)
+    SideLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
     ------------------------------------------------
-    -- CONTENT
+    -- FOLLOW SYSTEM
     ------------------------------------------------
 
-    self.Container = Instance.new("Frame")
-    self.Container.Parent = self.Main
-    self.Container.Size = UDim2.new(1,-140,1,-40)
-    self.Container.Position = UDim2.new(0,140,0,40)
+    RunService.RenderStepped:Connect(function()
+
+        Header.Position =
+            UDim2.new(
+                self.Main.Position.X.Scale,
+                self.Main.Position.X.Offset + 150,
+                self.Main.Position.Y.Scale,
+                self.Main.Position.Y.Offset - 30
+            )
+
+        self.Side.Position =
+            UDim2.new(
+                self.Main.Position.X.Scale,
+                self.Main.Position.X.Offset - 70,
+                self.Main.Position.Y.Scale,
+                self.Main.Position.Y.Offset + 40
+            )
+
+    end)
+
+    ------------------------------------------------
+    -- CONTAINER
+    ------------------------------------------------
+
+    self.Container = Instance.new("Frame",self.Main)
+    self.Container.Size = UDim2.new(1,-20,1,-20)
+    self.Container.Position = UDim2.new(0,10,0,10)
     self.Container.BackgroundTransparency = 1
 
     ------------------------------------------------
-    -- KEYBIND SYSTEM
+    -- KEYBIND
     ------------------------------------------------
 
-    UserInputService.InputBegan:Connect(function(input,gpe)
+    UIS.InputBegan:Connect(function(i,g)
 
-        if gpe then return end
+        if g then return end
 
-        if input.KeyCode == self.Keybind then
+        if i.KeyCode == self.Keybind then
 
-            self.Visible = not self.Visible
-
-            self.Main.Visible = self.Visible
+            self.Main.Visible = not self.Main.Visible
+            self.Side.Visible = self.Main.Visible
+            Header.Visible = self.Main.Visible
 
         end
 
@@ -209,25 +213,25 @@ function NK_Library:CreateTab(name)
 
     local Tab = {}
 
-    local Button = Instance.new("TextButton")
-    Button.Parent = self.Sidebar
-    Button.Size = UDim2.new(1,0,0,40)
-    Button.BackgroundColor3 = Background
-    Button.Text = name
+    local Button = Instance.new("TextButton",self.Side)
+    Button.Size = UDim2.new(0,40,0,40)
+    Button.BackgroundColor3 = Theme.Surface2
+    Button.Text = ""
 
-    ApplyText(Button,14)
+    Corner(Button,6)
 
-    CreateStroke(Button)
+    local Indicator = Instance.new("Frame",Button)
+    Indicator.Size = UDim2.new(0,3,1,0)
+    Indicator.BackgroundColor3 = Theme.Accent
+    Indicator.Visible = false
 
-    local Page = Instance.new("ScrollingFrame")
-    Page.Parent = self.Container
+    local Page = Instance.new("ScrollingFrame",self.Container)
     Page.Size = UDim2.new(1,0,1,0)
-    Page.Visible = false
     Page.BackgroundTransparency = 1
-    Page.ScrollBarThickness = 3
+    Page.Visible = false
+    Page.ScrollBarThickness = 0
 
-    local Layout = Instance.new("UIListLayout")
-    Layout.Parent = Page
+    local Layout = Instance.new("UIListLayout",Page)
     Layout.Padding = UDim.new(0,6)
 
     Button.MouseButton1Click:Connect(function()
@@ -238,165 +242,90 @@ function NK_Library:CreateTab(name)
             end
         end
 
+        for _,v in pairs(self.Side:GetChildren()) do
+            if v:IsA("TextButton") then
+                v.Indicator.Visible = false
+            end
+        end
+
         Page.Visible = true
+        Indicator.Visible = true
 
     end)
 
     ------------------------------------------------
-    -- TOGGLE
+    -- TOGGLE (REAL STUD HUB STYLE)
     ------------------------------------------------
 
     function Tab:CreateToggle(text,default,callback)
 
-        local enabled = default or false
+        local state = default or false
 
-        local Frame = Instance.new("Frame")
-        Frame.Parent = Page
-        Frame.Size = UDim2.new(1,-10,0,40)
-        Frame.BackgroundColor3 = LightBackground
+        local Card = Instance.new("Frame",Page)
+        Card.Size = UDim2.new(1,-6,0,45)
+        Card.BackgroundColor3 = Theme.Surface
 
-        CreateCorner(Frame,6)
+        Corner(Card,6)
+        Stroke(Card)
 
-        local Label = Instance.new("TextLabel")
-        Label.Parent = Frame
-        Label.Size = UDim2.new(1,-60,1,0)
+        local Label = Instance.new("TextLabel",Card)
         Label.Position = UDim2.new(0,10,0,0)
-        Label.BackgroundTransparency = 1
+        Label.Size = UDim2.new(1,-70,1,0)
         Label.Text = text
+        Text(Label,14)
 
-        ApplyText(Label,14)
+        local Toggle = Instance.new("Frame",Card)
+        Toggle.Size = UDim2.new(0,36,0,18)
+        Toggle.Position = UDim2.new(1,-50,0.5,-9)
+        Toggle.BackgroundColor3 =
+            state and Theme.Accent or Theme.Surface2
 
-        local Toggle = Instance.new("Frame")
-        Toggle.Parent = Frame
-        Toggle.Size = UDim2.new(0,40,0,20)
-        Toggle.Position = UDim2.new(1,-50,0.5,-10)
-        Toggle.BackgroundColor3 = enabled and ThemeColor or Color3.fromRGB(60,60,60)
+        Corner(Toggle,20)
 
-        CreateCorner(Toggle,20)
+        local Dot = Instance.new("Frame",Toggle)
+        Dot.Size = UDim2.new(0,14,0,14)
+        Dot.Position =
+            state and UDim2.new(1,-16,0.5,-7)
+            or UDim2.new(0,2,0.5,-7)
 
-        local Button = Instance.new("TextButton")
-        Button.Parent = Frame
-        Button.Size = UDim2.new(1,0,1,0)
-        Button.BackgroundTransparency = 1
-        Button.Text = ""
+        Dot.BackgroundColor3 = Color3.new(1,1,1)
 
-        Button.MouseButton1Click:Connect(function()
+        Corner(Dot,20)
 
-            enabled = not enabled
+        local Click = Instance.new("TextButton",Card)
+        Click.Size = UDim2.new(1,0,1,0)
+        Click.BackgroundTransparency = 1
+        Click.Text = ""
 
-            TweenService:Create(
-                Toggle,
-                TweenInfo.new(0.2),
-                {BackgroundColor3 = enabled and ThemeColor or Color3.fromRGB(60,60,60)}
-            ):Play()
+        Click.MouseButton1Click:Connect(function()
+
+            state = not state
+
+            TweenService:Create(Dot,TweenInfo.new(.2),{
+
+                Position =
+                    state and UDim2.new(1,-16,0.5,-7)
+                    or UDim2.new(0,2,0.5,-7)
+
+            }):Play()
+
+            TweenService:Create(Toggle,TweenInfo.new(.2),{
+
+                BackgroundColor3 =
+                    state and Theme.Accent
+                    or Theme.Surface2
+
+            }):Play()
 
             if callback then
-                callback(enabled)
+                callback(state)
             end
 
         end)
 
     end
 
-    ------------------------------------------------
-    -- KEYBIND SETTING
-    ------------------------------------------------
-
-    function Tab:CreateKeybind(text,default,callback)
-
-        local current = default
-
-        local Frame = Instance.new("Frame")
-        Frame.Parent = Page
-        Frame.Size = UDim2.new(1,-10,0,40)
-        Frame.BackgroundColor3 = LightBackground
-
-        CreateCorner(Frame,6)
-
-        local Label = Instance.new("TextLabel")
-        Label.Parent = Frame
-        Label.Size = UDim2.new(0.6,0,1,0)
-        Label.BackgroundTransparency = 1
-        Label.Text = text
-
-        ApplyText(Label)
-
-        local Button = Instance.new("TextButton")
-        Button.Parent = Frame
-        Button.Size = UDim2.new(0.4,-10,0,26)
-        Button.Position = UDim2.new(0.6,10,0.5,-13)
-        Button.BackgroundColor3 = Background
-        Button.Text = current.Name
-
-        ApplyText(Button)
-
-        Button.MouseButton1Click:Connect(function()
-
-            Button.Text = "..."
-
-            local conn
-            conn = UserInputService.InputBegan:Connect(function(input)
-
-                if input.KeyCode ~= Enum.KeyCode.Unknown then
-
-                    current = input.KeyCode
-
-                    Button.Text = current.Name
-
-                    if callback then
-                        callback(current)
-                    end
-
-                    conn:Disconnect()
-
-                end
-
-            end)
-
-        end)
-
-    end
-
     return Tab
-
-end
-
-----------------------------------------------------
--- NOTIFICATION
-----------------------------------------------------
-
-function NK_Library:Notify(title,text,time)
-
-    local Frame = Instance.new("Frame")
-    Frame.Parent = self.Gui
-    Frame.Size = UDim2.new(0,250,0,80)
-    Frame.Position = UDim2.new(1,-260,1,-90)
-    Frame.BackgroundColor3 = Background
-
-    CreateCorner(Frame,8)
-    CreateStroke(Frame,ThemeColor)
-
-    local Title = Instance.new("TextLabel")
-    Title.Parent = Frame
-    Title.Size = UDim2.new(1,0,0.4,0)
-    Title.BackgroundTransparency = 1
-    Title.Text = title
-
-    ApplyText(Title,16)
-
-    local Text = Instance.new("TextLabel")
-    Text.Parent = Frame
-    Text.Size = UDim2.new(1,-10,0.6,0)
-    Text.Position = UDim2.new(0,5,0.4,0)
-    Text.BackgroundTransparency = 1
-    Text.Text = text
-    Text.TextWrapped = true
-
-    ApplyText(Text,14)
-
-    task.delay(time or 3,function()
-        Frame:Destroy()
-    end)
 
 end
 
