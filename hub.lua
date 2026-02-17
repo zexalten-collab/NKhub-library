@@ -214,26 +214,30 @@ function NK_Library:CreateTab(name)
     local Layout = Instance.new("UIListLayout",Page)
     Layout.Padding = UDim.new(0,6)
 
-    Button.MouseButton1Click:Connect(function()
-        for _,v in pairs(self.Container:GetChildren()) do
-            if v:IsA("ScrollingFrame") then
-                v.Visible = false
+-- Odnajdź tę sekcję w funkcji NK_Library:CreateTab(name)
+Button.MouseButton1Click:Connect(function()
+    for _, v in pairs(self.Container:GetChildren()) do
+        if v:IsA("ScrollingFrame") then
+            v.Visible = false
+        end
+    end
+
+    for _, v in pairs(self.Side:GetChildren()) do
+        -- KLUCZOWA POPRAWKA: Sprawdzamy czy to TextButton i czy MA Indicator
+        if v:IsA("TextButton") then
+            local targetIndicator = v:FindFirstChild("Indicator")
+            if targetIndicator then
+                targetIndicator.Visible = false
             end
         end
+    end
 
-        for _,v in pairs(self.Side:GetChildren()) do
-            -- POPRAWKA: Sprawdzanie czy element to przycisk i czy ma indykator
-            if v:IsA("TextButton") then
-                local ind = v:FindFirstChild("Indicator")
-                if ind then
-                    ind.Visible = false
-                end
-            end
-        end
-
-        Page.Visible = true
-        Indicator.Visible = true
-    end)
+    Page.Visible = true
+    -- Upewnij się, że lokalna zmienna Indicator jest dostępna w tym zasięgu
+    if Indicator then 
+        Indicator.Visible = true 
+    end
+end)
 
     ------------------------------------------------
     -- TOGGLE (REAL STUD HUB STYLE)
