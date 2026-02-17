@@ -253,11 +253,13 @@ end)
         Corner(Card,6)
         Stroke(Card)
 
-        local Label = Instance.new("TextLabel",Card)
-        Label.Position = UDim2.new(0,10,0,0)
-        Label.Size = UDim2.new(1,-70,1,0)
-        Label.Text = text
-        Text(Label,14)
+-- Wewnątrz NK_Library:CreateTab -> Tab:CreateToggle
+        local Label = Instance.new("TextLabel", Card)
+        Label.Position = UDim2.new(0, 10, 0, 0)
+        Label.Size = UDim2.new(1, -70, 1, 0)
+        Label.Text = text -- TA LINIA JEST KLUCZOWA, musi przypisywać zmienną 'text'
+        Label.TextXAlignment = Enum.TextXAlignment.Left -- Opcjonalnie: wyrównanie do lewej
+        Text(Label, 14)
 
         local Toggle = Instance.new("Frame",Card)
         Toggle.Size = UDim2.new(0,36,0,18)
